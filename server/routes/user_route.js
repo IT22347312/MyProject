@@ -1,117 +1,89 @@
-var express = require("express");
-var User = require("../models/User");
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+require("dotenv").config();
 
-var router = express.Router();
+const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET;
 
-//login API endpoint
-router.route("/login").post((req, res) => {
+// Register API Endpoint
+router.post("/register", async (req, res) => {
+    try {
+        const { first_name, last_name, mobile_number, email, city, password, profile_pic } = req.body;
 
-    const email = req.body.email;
-    const password = req.body.password;
-
-    User.findOne({ email: email, password: password }).then((doc) => {
-
-        if (doc != null) {
-
-            res.send({ status: "success", email: email, password:password });
-
-        } else {
-            //invalid user
-            res.send({ status: "invalid_user", "message": "Incorrent email or password." });
+        if (!first_name || !last_name || !mobile_number || !email || !city || !password) {
+            return res.status(400).json({ status: "required_failed", message: "Please send required details." });
         }
 
-    }).catch((e) => {
-        res.send({ status: "failed", "message": e});
-    });
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ status: "already_email", message: "This email is already taken." });
+        }
 
-});
+        const hashedPassword = bcrypt.hashSync(password, 10); 
+        User.password = hashedPassword;
 
-//register API endpoint
-router.route("/register").post((req, res) => {
+        const newUser = new User({
+            first_name,
+            last_name,
+            mobile_number,
+            email,
+            city,
+            password: hashedPassword,
+            profile_pic
+        });
 
-    var firstName = req.body.first_name;
-    var lastName = req.body.last_name;
-    var mobileNumber = req.body.mobile_number;
-    var email = req.body.email;
-    var city = req.body.city;
-    var password = req.body.password;
+        await newUser.save();
+        res.status(201).json({ status: "success", message: "User registered successfully." });
 
-    //validate details
-    if (firstName == null || firstName == "" ||
-        lastName == null || lastName == "" ||
-        mobileNumber == null || mobileNumber == "" ||
-        email == null || email == "" ||
-        city == null || city == "" ||
-        password == null || password == "") {
-
-        res.send({ "status": "required_failed", "message": "Please send required details." });
-
-        return;
+    } catch (error) {
+        res.status(500).json({ status: "failed", message: "Something went wrong.", error: error.message });
     }
-
-    //check email is already
-    User.findOne({ email: email }).then((doc) => {
-
-        if (doc == null) {
-
-            //save user details
-            var user = new User();
-            user.first_name = firstName;
-            user.last_name = lastName;
-            user.mobile_number = mobileNumber;
-            user.email = email;
-            user.city = city;
-            user.password = password;
-
-            user.save().then(() => {
-                res.send({ "status": "success", "message": "User is register success." });
-            }).catch((e) => {
-                res.send({ "status": "failed", "message": "Somthing error. Please try again." });
-            });
-
-        } else {
-            res.send({ "status": "already_email", "message": "This email is already taken." });
-        }
-
-    }).catch((e) => {
-        res.send({ "status": "failed", "message": "Somthing error. Please try again." });
-    });
-
 });
 
+// Login API Endpoint
+router.post("/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-// fetch users for notification system
-router.route("/users").get((req, res) => {
-    User.find({}).then((users) => {
-
-        console.log(users);
-        if (users.length > 0) {
-            res.send({ status: "success", users: users });
-        } else {
-            res.send({ status: "no_users", message: "No users found." });
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ status: "invalid_user", message: "Incorrect email or password." });
         }
-    }).catch((e) => {
-        res.send({ status: "failed", message: "Something went wrong. Please try again." });
-    });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ status: "invalid_user", message: "Incorrect email or password." });
+        }
+
+        const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: "7d" });
+
+        res.status(200).json({ status: "success", message: "Login successful", token });
+
+    } catch (error) {
+        res.status(500).json({ status: "failed", message: "Something went wrong.", error: error.message });
+    }
 });
 
-router.get('/api/admin/register', async (req, res) => {
+// Fetch all users
+router.get("/users", async (req, res) => {
     try {
         const users = await User.find({});
-        res.status(200).json({
-            message: 'All users retrieved successfully',
-            status: 'success',
-            data: users  // Ensure this matches the data structure you expect
-        });
+        res.status(200).json({ status: "success", users });
     } catch (error) {
-        res.status(500).json({
-            message: 'Error retrieving users',
-            status: 'error',
-            error: error.message
-        });
+        res.status(500).json({ status: "failed", message: "Something went wrong.", error: error.message });
     }
 });
 
+// Admin route to get all users
+router.get("/admin/register", async (req, res) => {
+    try {
+        const users = await User.find({});
+        res.status(200).json({ status: "success", message: "All users retrieved successfully", data: users });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: "Error retrieving users", error: error.message });
+    }
+});
 
-
-module.exports = router;
+module.exports = router;

@@ -15,29 +15,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json()); 
 
 
-
-// Authentication Middleware
-app.use(async (req, res, next) => {
-    const email = req.body.auth_email;
-    const password = req.body.auth_password;
-
-    if (email && password) {
-        try {
-            const user = await User.findOne({ email: email, password: password });
-            if (!user) {
-                return res.status(400).json({ status: "invalid_user", message: "This user is invalid." });
-            }
-            req.current_user = { user_id: user._id, user: user };
-            next();
-        } catch (error) {
-            return res.status(500).json({ error: "Error during authentication" });
-        }
-    } else {
-        req.current_user = null;
-        next();
-    }
-});
-
 app.use("/api", userRoute);
 
 
