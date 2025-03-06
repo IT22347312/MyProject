@@ -7,7 +7,7 @@ require("dotenv").config();
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Register API Endpoint
+// ✅ Register API Endpoint
 router.post("/register", async (req, res) => {
     try {
         const { first_name, last_name, mobile_number, email, city, password, profile_pic } = req.body;
@@ -21,8 +21,9 @@ router.post("/register", async (req, res) => {
             return res.status(400).json({ status: "already_email", message: "This email is already taken." });
         }
 
-        const hashedPassword = bcrypt.hashSync(password, 10); 
-        User.password = hashedPassword;
+        // Check if the password is already hashed (if it looks like a bcrypt hash)
+        const isHashed = password.startsWith('$2b$');  // bcrypt hash starts with $2b$
+        const hashedPassword = isHashed ? password : await bcrypt.hash(password, 10);  // If it's already hashed, use it as is. Otherwise, hash it.
 
         const newUser = new User({
             first_name,
@@ -30,7 +31,7 @@ router.post("/register", async (req, res) => {
             mobile_number,
             email,
             city,
-            password: hashedPassword,
+            password: hashedPassword,  // Save the hashed password
             profile_pic
         });
 
@@ -42,7 +43,9 @@ router.post("/register", async (req, res) => {
     }
 });
 
-// Login API Endpoint
+
+
+// ✅ Login API Endpoint
 router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -52,9 +55,23 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ status: "invalid_user", message: "Incorrect email or password." });
         }
 
+        // Debugging line: Check user details
+        console.log("User found:", user);
+
+        // Compare password with the stored hash
+        const trimmedPassword = password.trim();
         const isMatch = await bcrypt.compare(password, user.password);
+
+        // Debugging line: Log password comparison result
+        console.log("Password Match:", isMatch);
+
         if (!isMatch) {
             return res.status(400).json({ status: "invalid_user", message: "Incorrect email or password." });
+        }
+
+        // ✅ Fix: Ensure JWT_SECRET is defined
+        if (!JWT_SECRET) {
+            return res.status(500).json({ status: "error", message: "JWT secret is missing." });
         }
 
         const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: "7d" });
@@ -62,11 +79,13 @@ router.post("/login", async (req, res) => {
         res.status(200).json({ status: "success", message: "Login successful", token });
 
     } catch (error) {
+        console.error(error);
         res.status(500).json({ status: "failed", message: "Something went wrong.", error: error.message });
     }
 });
 
-// Fetch all users
+
+// ✅ Fetch all users
 router.get("/users", async (req, res) => {
     try {
         const users = await User.find({});
@@ -76,8 +95,8 @@ router.get("/users", async (req, res) => {
     }
 });
 
-// Admin route to get all users
-router.get("/admin/register", async (req, res) => {
+// ✅ Admin route to get all users (renamed for clarity)
+router.get("/admin/users", async (req, res) => {
     try {
         const users = await User.find({});
         res.status(200).json({ status: "success", message: "All users retrieved successfully", data: users });
