@@ -1,33 +1,70 @@
 const express = require("express");
-const router = express.Router();
 const Budget = require("../models/budget");
-const authMiddleware = require("../middlewares/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
-// Set a budget
-router.post("/set", authMiddleware, async (req, res) => {
+const router = express.Router();
+
+// Create a new budget
+router.post("/budgets", authMiddleware, async (req, res) => {
     try {
-        const { category, limit } = req.body;
+        const { category, amount, end_date } = req.body;
+        const user_id = req.user.id;
+
+        if (!category || !amount || !end_date) {
+            return res.status(400).json({ message: "Category, amount, and end date are required." });
+        }
 
         const budget = new Budget({
-            user: req.user.id,
+            user_id,
             category,
-            limit
+            amount,
+            end_date
         });
 
         await budget.save();
-        res.status(201).json({ message: "Budget set successfully", budget });
+        res.status(201).json({ message: "Budget created successfully", budget });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ message: "Error creating budget", error: error.message });
     }
 });
 
-// Get budgets for a user
-router.get("/all", authMiddleware, async (req, res) => {
+// Get all budgets for a user
+router.get("/budgets", authMiddleware, async (req, res) => {
     try {
-        const budgets = await Budget.find({ user: req.user.id });
-        res.json(budgets);
+        const budgets = await Budget.find({ user_id: req.user.id });
+        res.status(200).json(budgets);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ message: "Error retrieving budgets", error: error.message });
+    }
+});
+
+// Update a budget
+router.put("/budgets/:id", authMiddleware, async (req, res) => {
+    try {
+        const budget = await Budget.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+        if (!budget) {
+            return res.status(404).json({ message: "Budget not found" });
+        }
+
+        res.status(200).json({ message: "Budget updated successfully", budget });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating budget", error: error.message });
+    }
+});
+
+// Delete a budget
+router.delete("/budgets/:id", authMiddleware, async (req, res) => {
+    try {
+        const budget = await Budget.findByIdAndDelete(req.params.id);
+
+        if (!budget) {
+            return res.status(404).json({ message: "Budget not found" });
+        }
+
+        res.status(200).json({ message: "Budget deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting budget", error: error.message });
     }
 });
 

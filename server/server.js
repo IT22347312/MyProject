@@ -4,6 +4,9 @@ require('dotenv').config();
 const mongoose = require("mongoose");
 const userRoute = require("./routes/user_route");
 const transactionRoutes = require("./routes/transaction_route");
+const budgetRoutes = require("./routes/budget_route");
+const reportRoutes = require("./routes/report_route");
+const notificationRoutes = require("./routes/notification_route");
 
 const app = express();
 
@@ -22,6 +25,9 @@ mongoose.connect(process.env.MONGO_URL)
 // ✅ API Routes
 app.use("/api", userRoute);
 app.use("/api", transactionRoutes);
+app.use("/api", budgetRoutes);
+app.use("/api", reportRoutes);
+app.use("/api", notificationRoutes);
 
 // ✅ Global Error Handling
 app.use((err, req, res, next) => {
