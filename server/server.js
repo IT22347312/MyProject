@@ -7,6 +7,9 @@ const transactionRoutes = require("./routes/transaction_route");
 const budgetRoutes = require("./routes/budget_route");
 const reportRoutes = require("./routes/report_route");
 const notificationRoutes = require("./routes/notification_route");
+const goalRoutes = require("./routes/goal_route");
+const currencyRoutes = require("./routes/currency_route");
+const adminRoutes = require("./routes/admin_routes");
 
 const app = express();
 
@@ -28,6 +31,9 @@ app.use("/api", transactionRoutes);
 app.use("/api", budgetRoutes);
 app.use("/api", reportRoutes);
 app.use("/api", notificationRoutes);
+app.use("/api", goalRoutes);
+app.use("/api", currencyRoutes);
+app.use("/api", adminRoutes);
 
 // ✅ Global Error Handling
 app.use((err, req, res, next) => {
