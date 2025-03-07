@@ -3,6 +3,7 @@ const cors = require("cors");
 require('dotenv').config();
 const mongoose = require("mongoose");
 const userRoute = require("./routes/user_route");
+const transactionRoutes = require("./routes/transaction_route");
 
 const app = express();
 
@@ -20,6 +21,7 @@ mongoose.connect(process.env.MONGO_URL)
 
 // ✅ API Routes
 app.use("/api", userRoute);
+app.use("/api", transactionRoutes);
 
 // ✅ Global Error Handling
 app.use((err, req, res, next) => {

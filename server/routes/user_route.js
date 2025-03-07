@@ -50,6 +50,12 @@ router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        // Validate the input fields
+        if (!email || !password) {
+            return res.status(400).json({ status: "failed", message: "Email and password are required." });
+        }
+
+        // Find the user by email
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ status: "invalid_user", message: "Incorrect email or password." });
@@ -60,7 +66,7 @@ router.post("/login", async (req, res) => {
 
         // Compare password with the stored hash
         const trimmedPassword = password.trim();
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(trimmedPassword, user.password);
 
         // Debugging line: Log password comparison result
         console.log("Password Match:", isMatch);
@@ -70,12 +76,15 @@ router.post("/login", async (req, res) => {
         }
 
         // ✅ Fix: Ensure JWT_SECRET is defined
+        const JWT_SECRET = process.env.JWT_SECRET;  // Ensure you use the environment variable for the secret
         if (!JWT_SECRET) {
             return res.status(500).json({ status: "error", message: "JWT secret is missing." });
         }
 
-        const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: "7d" });
+        // Generate JWT token (including user ID and any other required details)
+        const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
 
+        // Respond with success and the generated token
         res.status(200).json({ status: "success", message: "Login successful", token });
 
     } catch (error) {
@@ -83,7 +92,6 @@ router.post("/login", async (req, res) => {
         res.status(500).json({ status: "failed", message: "Something went wrong.", error: error.message });
     }
 });
-
 
 // ✅ Fetch all users
 router.get("/users", async (req, res) => {
