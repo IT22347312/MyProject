@@ -7,6 +7,8 @@ const transactionRoutes = require("./routes/transaction_route");
 const budgetRoutes = require("./routes/budget_route");
 const reportRoutes = require("./routes/report_route");
 const notificationRoutes = require("./routes/notification_route");
+const authMiddleware = require("./middleware/authMiddleware"); 
+const errorHandler = require("./middleware/errorHandlerMiddleware");
 
 const app = express();
 

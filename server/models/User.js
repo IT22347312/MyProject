@@ -1,30 +1,45 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const Schema = mongoose.Schema;
-const ObjectId = Schema.ObjectId;
 
-const userSchema = new Schema(
-    {
-        id: ObjectId,
-        first_name: { type: String, required: true },
-        last_name: { type: String, required: true },
-        mobile_number: { type: String, required: true },
-        email: { type: String, required: true, unique: true },
-        city: { type: String, required: true },
-        password: { type: String, required: true },
-        profile_pic: { type: String },
-         },
-    { timestamps: true }
+const userSchema = new mongoose.Schema(
+  {
+    first_name: {
+      type: String,
+      required: true,
+    },
+
+    last_name: {
+      type: String,
+      required: true,
+    },
+
+    mobile_number: {
+      type: String,
+      required: true,
+      // Optional: You can add a regex for validating phone number formats here (e.g., simple format)
+      match: [/^\d{10}$/, "Please enter a valid mobile number."],
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      match: [/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/, "Please enter a valid email address."],
+    },
+
+    password: {
+      type: String,
+      required: true,
+    },
+
+    profile_pic: {
+      type: String,
+      // Optional: Validate that profile_pic is a URL if it's supposed to be a link to an image.
+      match: [/^https?:\/\/\S+\.\S+$/, "Please enter a valid URL for the profile picture."],
+    },
+  },
+  {
+    timestamps: true,
+  }
 );
 
-// Hash password before saving
-userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-});
-
-
-const User = mongoose.model("User", userSchema);
-module.exports = User;
+module.exports = mongoose.model("User", userSchema);
