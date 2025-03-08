@@ -13,7 +13,6 @@ const userSchema = new Schema(
         city: { type: String, required: true },
         password: { type: String, required: true },
         profile_pic: { type: String },
-        role: { type: String, enum: ["user", "admin"], default: "user" },
          },
     { timestamps: true }
 );

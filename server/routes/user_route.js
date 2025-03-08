@@ -10,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // ✅ Register API Endpoint
 router.post("/register", async (req, res) => {
     try {
-        const { first_name, last_name, mobile_number, email, city, password, profile_pic,role = "user" } = req.body;
+        const { first_name, last_name, mobile_number, email, city, password, profile_pic } = req.body;
 
         if (!first_name || !last_name || !mobile_number || !email || !city || !password) {
             return res.status(400).json({ status: "required_failed", message: "Please send required details." });
@@ -32,8 +32,7 @@ router.post("/register", async (req, res) => {
             email,
             city,
             password: hashedPassword,  // Save the hashed password
-            profile_pic,
-            role
+            profile_pic
         });
 
         await newUser.save();
@@ -68,7 +67,6 @@ router.post("/login", async (req, res) => {
         // Compare password with the stored hash
         const trimmedPassword = password.trim();
         const isMatch = await bcrypt.compare(trimmedPassword, user.password);
-       
 
         // Debugging line: Log password comparison result
         console.log("Password Match:", isMatch);
