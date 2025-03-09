@@ -3,12 +3,10 @@ const cors = require("cors");
 require('dotenv').config();
 const mongoose = require("mongoose");
 const userRoute = require("./routes/user_route");
-const transactionRoutes = require("./routes/transaction_route");
-const budgetRoutes = require("./routes/budget_route");
+const transactionRouter = require("./routes/transaction_route");
 const reportRoutes = require("./routes/report_route");
 const notificationRoutes = require("./routes/notification_route");
-const authMiddleware = require("./middleware/authMiddleware"); 
-const errorHandler = require("./middleware/errorHandlerMiddleware");
+
 
 const app = express();
 
@@ -26,8 +24,7 @@ mongoose.connect(process.env.MONGO_URL)
 
 // ✅ API Routes
 app.use("/api", userRoute);
-app.use("/api", transactionRoutes);
-app.use("/api", budgetRoutes);
+app.use("/api", transactionRouter);
 app.use("/api", reportRoutes);
 app.use("/api", notificationRoutes);
 

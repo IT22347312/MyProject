@@ -14,11 +14,6 @@ const transactionSchema = new mongoose.Schema(
       enum: ["income", "expense"],
     },
     
-    category: {
-      type: String,
-      required: true,
-      default: "Uncategorized",
-    },
     amount: {
       type: Number,
       required: true,
@@ -26,7 +21,8 @@ const transactionSchema = new mongoose.Schema(
     category: {
          type: String,
           enum: ["Food", "Transportation", "Entertainment", "Bills", "Salary", "Others"],
-           required: true
+           required: true,
+           default: "Uncategorized",
          },
          tags: [{ type: String }],
 
