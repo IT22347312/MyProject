@@ -1,18 +1,36 @@
+require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
-require('dotenv').config();
 const mongoose = require("mongoose");
-const userRoute = require("./routes/user_route");
-const transactionRouter = require("./routes/transaction_route");
-const reportRoutes = require("./routes/report_route");
-const notificationRoutes = require("./routes/notification_route");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+
+const authRoutes = require("./routes/authRoutes");
+const transactionRoutes = require("./routes/transactionRoutes");
+const budgetRoutes = require('./routes/budgetRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const goalRoutes = require('./routes/goalRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+
 
 
 const app = express();
 
+// Middleware
+app.use(express.json());
 app.use(cors());
-app.use(express.json());  
-app.use(express.urlencoded({ extended: true }));  
+app.use(cookieParser());
+
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use('/api/budgets', budgetRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/notification', notificationRoutes);
+app.use('/api/goal', goalRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+
+
 
 // ✅ Connect to MongoDB
 mongoose.connect(process.env.MONGO_URL)
@@ -22,18 +40,5 @@ mongoose.connect(process.env.MONGO_URL)
     process.exit(1);  // Exit process if DB connection fails
 });
 
-// ✅ API Routes
-app.use("/api", userRoute);
-app.use("/api", transactionRouter);
-app.use("/api", reportRoutes);
-app.use("/api", notificationRoutes);
-
-// ✅ Global Error Handling
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ status: "error", message: "Internal Server Error" });
-});
-
-// ✅ Start the Server
-const port = process.env.PORT || 5001;
-app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
